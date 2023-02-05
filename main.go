@@ -1,13 +1,7 @@
 package main
 
-import (
-	"GoBlockChain/blockchain"
-)
+import "GoBlockChain/explorer"
 
 func main() {
-	chain := blockchain.GetBlockchain()
-	chain.AddBlock("jun")
-	chain.AddBlock("chan")
-	chain.ListBlocks()
-
+	explorer.StartExplorer()
 }

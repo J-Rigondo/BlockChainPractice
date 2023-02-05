@@ -6,14 +6,14 @@ import (
 	"sync"
 )
 
-type block struct {
-	data     string
-	hash     string // 이전 block의 hash + 현 block의 data
-	prevHash string
+type Block struct {
+	Data     string
+	Hash     string // 이전 block의 hash + 현 block의 data
+	PrevHash string
 }
 
 type blockchain struct {
-	blocks []*block //private
+	blocks []*Block //private
 }
 
 var b *blockchain
@@ -35,11 +35,11 @@ func (b *blockchain) AddBlock(data string) {
 	b.blocks = append(b.blocks, createBlock(data))
 }
 
-func createBlock(data string) *block {
-	newBlock := block{data, "", getLastHash()}
-	sum256 := sha256.Sum256([]byte(data + newBlock.prevHash))
+func createBlock(data string) *Block {
+	newBlock := Block{data, "", getLastHash()}
+	sum256 := sha256.Sum256([]byte(data + newBlock.PrevHash))
 	hexHash := fmt.Sprintf("%x", sum256)
-	newBlock.hash = hexHash
+	newBlock.Hash = hexHash
 
 	return &newBlock
 
@@ -47,7 +47,7 @@ func createBlock(data string) *block {
 
 func getLastHash() string {
 	if len(b.blocks) > 0 {
-		return b.blocks[len(b.blocks)-1].hash
+		return b.blocks[len(b.blocks)-1].Hash
 	}
 
 	return ""
@@ -55,8 +55,12 @@ func getLastHash() string {
 
 func (b *blockchain) ListBlocks() {
 	for _, a := range b.blocks {
-		fmt.Printf("data: %s\n", a.data)
-		fmt.Printf("hash: %s\n", a.hash)
-		fmt.Printf("prevHash: %s\n", a.prevHash)
+		fmt.Printf("data: %s\n", a.Data)
+		fmt.Printf("hash: %s\n", a.Hash)
+		fmt.Printf("prevHash: %s\n", a.PrevHash)
 	}
+}
+
+func (b *blockchain) GetAllBlocks() []*Block {
+	return b.blocks
 }
