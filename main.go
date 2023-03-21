@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GoBlockChain/blockchain"
 	"GoBlockChain/utils"
 	"encoding/json"
 	"fmt"
@@ -24,6 +25,10 @@ type URLDesc struct {
 	Method  string `json:"method"` //소문자로 하면 json export 불가능
 	Desc    string `json:"desc"`
 	Payload string `json:"payload,omitempty"` //omitempty 데이터 없을 시 해당 프로퍼티 안내림  '-' 사용시 필드 무시
+}
+
+type AddBlockBody struct {
+	Message string
 }
 
 func (receiver URLDesc) String() string {
@@ -55,6 +60,21 @@ func main() {
 
 		//Marshal로 바이트 변환할 필요없이 json encoder 사용
 		json.NewEncoder(writer).Encode(data)
+
+	})
+
+	http.HandleFunc("/blocks", func(writer http.ResponseWriter, request *http.Request) {
+		switch request.Method {
+		case "GET":
+			writer.Header().Add("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(blockchain.GetBlockchain().ListBlocks())
+		case "POST":
+			var addBlockBody AddBlockBody
+			json.NewDecoder(request.Body).Decode(&addBlockBody)
+			log.Println(addBlockBody)
+			blockchain.GetBlockchain().AddBlock(addBlockBody.Message)
+			writer.WriteHeader(http.StatusCreated)
+		}
 
 	})
 
