@@ -10,9 +10,12 @@ import (
 
 type Block struct {
 	Data     string `json:"data"`
-	Hash     string `json:"hash"` // 이전 block의 hash + 현 block의 data
-	PrevHash string `json:"prevHash,omitempty"`
+	Hash     string `json:"hash"`               // 이전 block의 hash + 현 block의 data
+	PrevHash string `json:"prevHash,omitempty"` //omitempty는 값이 있을 경우만 json에 포함
 	Height   int    `json:"height"`
+	//Difficulty int    `json:"difficulty"`
+	//Nonce      int    `json:"nonce"`
+	//Timestamp  int    `json:"timestamp"`
 }
 
 func (b *Block) persist() {
