@@ -5,11 +5,12 @@ import (
 	"GoBlockChain/utils"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
-const port string = ":4000"
+var port string
 
 // 타입을 설정하고 리시버 함수를 아래에서 구현 인터페이스 implement와 비슷
 type URL string
@@ -32,8 +33,11 @@ type addBlockBody struct {
 	Message string
 }
 
-func Start() {
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+func Start(portNo int) {
+	port = fmt.Sprintf(":%d", portNo)
+	router := mux.NewRouter()
+
+	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		data := []uRLDesc{
 			{
 				URL:     "/",
@@ -58,9 +62,9 @@ func Start() {
 		//Marshal로 바이트 변환할 필요없이 json encoder 사용
 		json.NewEncoder(writer).Encode(data)
 
-	})
+	}).Methods("GET")
 
-	http.HandleFunc("/blocks", func(writer http.ResponseWriter, request *http.Request) {
+	router.HandleFunc("/blocks", func(writer http.ResponseWriter, request *http.Request) {
 		switch request.Method {
 		case "GET":
 			writer.Header().Add("Content-Type", "application/json")
@@ -73,8 +77,15 @@ func Start() {
 			writer.WriteHeader(http.StatusCreated)
 		}
 
-	})
+	}).Methods("GET", "POST")
+
+	router.HandleFunc("/blocks/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		log.Println(vars)
+		id := vars["id"]
+
+	}).Methods("GET")
 
 	log.Println("Running at http://localhost:4000")
-	log.Fatal(http.ListenAndServe(port, nil))
+	log.Fatal(http.ListenAndServe(port, router))
 }
