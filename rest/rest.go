@@ -5,8 +5,10 @@ import (
 	"GoBlockChain/utils"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const port string = ":4000"
@@ -33,48 +35,60 @@ type addBlockBody struct {
 }
 
 func Start() {
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		data := []uRLDesc{
-			{
-				URL:     "/",
-				Method:  "GET",
-				Desc:    "See Doc",
-				Payload: "",
-			},
-			{
-				URL:     "/blocks",
-				Method:  "POST",
-				Desc:    "Add a block",
-				Payload: "data:string",
-			},
-		}
-
-		bytes, err := json.Marshal(data)
-		utils.HandleError(err)
-
-		writer.Header().Add("Content-Type", "application/json")
-		fmt.Printf("%s", bytes) //byte -> string
-
-		//Marshal로 바이트 변환할 필요없이 json encoder 사용
-		json.NewEncoder(writer).Encode(data)
-
-	})
-
-	http.HandleFunc("/blocks", func(writer http.ResponseWriter, request *http.Request) {
-		switch request.Method {
-		case "GET":
-			writer.Header().Add("Content-Type", "application/json")
-			json.NewEncoder(writer).Encode(blockchain.GetBlockchain().ListBlocks())
-		case "POST":
-			var addBlockBody addBlockBody
-			json.NewDecoder(request.Body).Decode(&addBlockBody)
-			log.Println(addBlockBody)
-			blockchain.GetBlockchain().AddBlock(addBlockBody.Message)
-			writer.WriteHeader(http.StatusCreated)
-		}
-
-	})
+	router := mux.NewRouter()
+	router.HandleFunc("/", docHandler)
+	router.HandleFunc("/blocks", blocksHandler)
+	router.HandleFunc("/blocks/{id}[0-9]+", blockHandler)
 
 	log.Println("Running at http://localhost:4000")
-	log.Fatal(http.ListenAndServe(port, nil))
+	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func blockHandler(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+	utils.HandleError(err)
+	json.NewEncoder(writer).Encode(id)
+}
+
+func blocksHandler(writer http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case "GET":
+		writer.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(writer).Encode(blockchain.GetBlockchain().Blocks())
+	case "POST":
+		var addBlockBody addBlockBody
+		json.NewDecoder(request.Body).Decode(&addBlockBody)
+		log.Println(addBlockBody)
+		blockchain.GetBlockchain().AddBlock(addBlockBody.Message)
+		writer.WriteHeader(http.StatusCreated)
+	}
+
+}
+
+func docHandler(writer http.ResponseWriter, request *http.Request) {
+	data := []uRLDesc{
+		{
+			URL:     "/",
+			Method:  "GET",
+			Desc:    "See Doc",
+			Payload: "",
+		},
+		{
+			URL:     "/blocks",
+			Method:  "POST",
+			Desc:    "Add a block",
+			Payload: "data:string",
+		},
+	}
+
+	bytes, err := json.Marshal(data)
+	utils.HandleError(err)
+
+	writer.Header().Add("Content-Type", "application/json")
+	fmt.Printf("%s", bytes) //byte -> string
+
+	//Marshal로 바이트 변환할 필요없이 json encoder 사용
+	json.NewEncoder(writer).Encode(data)
+
 }
