@@ -36,12 +36,20 @@ type addBlockBody struct {
 
 func Start() {
 	router := mux.NewRouter()
+	router.Use(jsonContentTypeMiddleware)
 	router.HandleFunc("/", docHandler)
 	router.HandleFunc("/blocks", blocksHandler)
 	router.HandleFunc("/blocks/{id}[0-9]+", blockHandler)
 
 	log.Println("Running at http://localhost:4000")
 	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func jsonContentTypeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(writer, request)
+	})
 }
 
 func blockHandler(writer http.ResponseWriter, request *http.Request) {
@@ -54,7 +62,6 @@ func blockHandler(writer http.ResponseWriter, request *http.Request) {
 func blocksHandler(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case "GET":
-		writer.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(writer).Encode(blockchain.GetBlockchain().Blocks())
 	case "POST":
 		var addBlockBody addBlockBody
@@ -90,5 +97,4 @@ func docHandler(writer http.ResponseWriter, request *http.Request) {
 
 	//Marshal로 바이트 변환할 필요없이 json encoder 사용
 	json.NewEncoder(writer).Encode(data)
-
 }
